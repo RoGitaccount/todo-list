@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5"> <!-- margin top -->
+        <h1 class="text-center">To-Do List</h1>
+        
+        <div class="input-group mb-4 mt-5"> 
+            <input id="taskInput" class=" form-control form-control-lg " type="text" placeholder="Entrer une nouvelle tâche">
+            <div class="input-group-append ">
+                <button onclick="addNewTask()" class="btn btn-primary ml" type="button">Ajouter</button>
+                <button onclick="toggleShowDoneTasks()" id="toggle_btn" class="btn btn-secondary ml-1" type="button">Afficher les tâches réalisées</button>
+            </div>
+        </div>
+
+        <section>
+            <h2 class="mb-4">Liste des to-dos :</h2>
+            <ul id="task_list" class="list-group">
+            </ul>
+        </section>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            renderTasks(); // Charge et affiche les tâches au chargement du DOM
+        });
+       
+        let showDoneOnly = false; // Variable pour basculer entre toutes les tâches et les tâches faites
+        let tasks = JSON.parse(localStorage.getItem("tasks")) || []; // Charge les tâches ou initialise un tableau vide
+
+        function saveTasks() {
+            localStorage.setItem("tasks", JSON.stringify(tasks)); // Convertit le tableau tasks en JSON et le stocke
+        }
+
+        function renderTasks() {
+            const task_list = document.getElementById("task_list");
+            task_list.innerHTML = ''; // Efface les éléments de la liste avant de recharger
+
+            if (tasks.length === 0) {
+                // Affiche un message lorsque la liste des tâches est vide
+                const emptyMessage = document.createElement("li");
+                emptyMessage.className = "list-group-item text-center";
+                emptyMessage.textContent = "Vous n'avez pas encore de To-do";
+                task_list.appendChild(emptyMessage);
+                return;
+            }
+
+            tasks.forEach((task, index) => {
+                if (showDoneOnly && !task.done) return;
+
+                const task_item = document.createElement("li");
+                task_item.className = `list-group-item d-flex justify-content-between align-items-center ${task.done ? 'done list-group-item-success' : ''}`;
+
+                let buttonText;
+                if (task.done) {
+                    buttonText = 'À faire';
+                } else {
+                    buttonText = 'Terminé';
+                }
+                task_item.innerHTML = `
+                    <span>${task.text}</span>
+                    <div>
+                        <button class="btn btn-success btn-sm mr-2 d-inline-block" style="min-width: 75px;" onclick="toggleTaskStatus(${index})">${buttonText}</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteTask(${index})">Supprimer</button>
+                    </div>
+                `;
+                task_list.appendChild(task_item);
+            });
+        }
+
+        // Ajouter une nouvelle tâche
+        function addNewTask() {
+            const taskInput = document.getElementById("taskInput");
+            const taskValue = taskInput.value.trim(); 
+
+            if (taskValue) {
+                tasks.push({ text: taskValue, done: false }); // Ajoute une nouvelle tâche au tableau tasks
+                saveTasks();
+                renderTasks();
+                taskInput.value = "";
+            }
+        }
+
+        // Supprimer une tâche
+        function deleteTask(index) {
+            tasks.splice(index, 1); // Supprime la tâche à l'index donné
+            saveTasks();
+            renderTasks();
+        }
+
+        // Basculer le statut d'une tâche
+        function toggleTaskStatus(index) {
+            tasks[index].done = !tasks[index].done; // Inverse le statut de la tâche
+            saveTasks();
+            renderTasks();
+        }
+
+        // Basculer l'affichage des tâches réalisées
+        function toggleShowDoneTasks() {
+            showDoneOnly = !showDoneOnly;
+            
+            if (showDoneOnly) {
+                document.getElementById("toggle_btn").textContent = "Afficher toutes les tâches";
+            } else {
+                document.getElementById("toggle_btn").textContent = "Afficher les tâches réalisées";
+            }
+
+            renderTasks(); // Met à jour l'affichage des tâches
+        }
+
+        // Appel initial pour afficher les tâches lors du chargement de la page
+        renderTasks();
+    </script>
+</body>
+</html>
